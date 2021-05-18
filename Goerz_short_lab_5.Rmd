@@ -65,14 +65,18 @@ ggarrange(g_train, g_test) # from ggpubr, to put side-by-side
 ```{r}
 # For loop with polynomail LM. 
 # conveninece function 
+# set K to 10 
 k = 10
 lm_list <- list()
+# Create an empty list. 
 #generate LMs
 for (i in 1:k) {
   # genarate 10 lms with increasing polynomials 
   lm_fit  = lm(y~poly(x,i), data = df_train)
+  # store them in the empty list 
   lm_list[[paste("lm_",i)]] <- lm_fit
 }
+# Look at an LM in the list 
 summary(lm_list[[1]])
 
 ```
@@ -82,14 +86,55 @@ summary(lm_list[[1]])
 
 ```{r}
 # for each model record the training error then predict y test and x test 
+# Calculate training error 
+# Create an empty list 
+lm_train_list_err <- list()
+# Loop through the lms 
+  for (i in 1:length(lm_list)) {
+    # extract lm at i and predict
+    y_hat_train = predict(lm_list[[i]])
+    # take the mean squared difference 
+    train_error = mean((df_train$y - y_hat_train)^2)
+    # store in lm list 
+    lm_train_list_err[[paste("train_err_",i,sep = "")]] = train_error
+  }
+# returns a list 
+# look at train error for all 10 models 
+lm_train_list_err
 
+# Calculate the testing error 
+# Create an empty list 
+lm_test_list_err <- list()
+# for loop through models 
+for (i in 1:length(lm_list)) {
+  # Predict test at i 
+  y_hat_test = predict(lm_list[[i]], data = df_test$x)
+  # calculate test mean squared difference 
+  test_error = mean((df_test$y - y_hat_test)^2)
+  # store in a new list 
+  lm_test_list_err[[paste("test_err_",i,sep = "")]] = test_error
+}
+# Returns a list for all 10 models 
 ```
 
 
 **1c.** Present the 10 values for both training error and test error on a single table. Comment on what you notice about the relative magnitudes of training and test error, as well as the trends in both types of error as $k$ increases.
 
+```{r}
+# Create a data frame of train and test error 
+data.frame(model = 1:10,
+           # unlist training error
+           train_error = unlist(lm_train_list_err),
+           # unlist test error 
+           test_error = unlist(lm_test_list_err))
+# returns a data frame 
+```
+
+As the number of polynomial Ks increases there is a steady decrease in the training error, which means that we are getting a better and better fit to the sample we have. However, as we predict on new data, the test error progressively increases, with a peak at K = 6 and then it flatlines. This suggests that we overfit the regression. 
+
 **1d.** If you were going to choose a model based on training error, which would you choose? Plot the data, colored by split. Add a line to the plot representing your selection for model fit. Add a subtitle to this plot with the (rounded!) test error.
 (*Hint: You can use as much of my code as you want for this and part (e). See Lecture Slides 8!*)
+
 
 **1e.** If you were going to choose a model based on test error, which would you choose? Plot the data, colored by split. Add a line to the plot representing your selection for model fit. Add a subtitle to this plot with the (rounded!) test error.
 
